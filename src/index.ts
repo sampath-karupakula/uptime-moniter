@@ -9,15 +9,12 @@ import { createServer,  IncomingMessage, ServerResponse } from 'http';
 import {StringDecoder} from 'string_decoder';
 import {URL} from "url";
 
+
 // create a server
 let server = createServer((req: IncomingMessage, res: ServerResponse) => {
 
-    // parse the incoming request.
-    console.log(req.url);
-    console.log(req.httpVersion);
-
+    // parse url
     const  parsedURL = new URL((('http://localhost:3000/'+req.url) || ''));
-
 
     // get the path
     const path = parsedURL.pathname;
@@ -42,14 +39,27 @@ let server = createServer((req: IncomingMessage, res: ServerResponse) => {
     req.on('end', () => {
        buffer += decoder.end();
 
+       const chosenHandler = typeof router[trimmedPath] !== 'undefined' ? router[trimmedPath] : handlers.not_found;
 
-        // set response.
-        res.end("Hello World !"+trimmedPath + ' requested method '+ method
-            + " with query params "+ JSON.stringify(queryParam) +" including headers" + JSON.stringify(headers)
-            + " payload is " + buffer);
+       const data = {
+           path: trimmedPath,
+           params: queryParam,
+           method: method,
+           payload: buffer,
+           headers: headers
+       }
 
-        // log the requested url path
-        console.log(buffer);
+       chosenHandler(data, (statusCode: number, payload: Object) => {
+            statusCode = typeof statusCode === "number" ? statusCode : 200;
+
+            payload = typeof payload === 'object' ? payload : {};
+
+            const payloadString: string = JSON.stringify(payload);
+
+            res.setHeader("content-type", "application/json");
+            res.writeHead(statusCode);
+            res.end(payloadString);
+       });
 
     });
     }
@@ -57,5 +67,19 @@ let server = createServer((req: IncomingMessage, res: ServerResponse) => {
 
 // listening to the port.
 server.listen(3000, () => {
-    console.log("Server is listening to the port 3000");
+    console.log("Server is listening to the port " + 3000);
 });
+
+
+const handlers : {[ handler: string]: Function } = {
+    "sampleHandler": (data: any, callback: Function) => {
+        callback(406, {name: 'Sample Handler'});
+    },
+    "not_found": (data: any, callback: Function) => {
+        callback(404);
+    }
+};
+
+const router: {[handler: string] : Function} = {
+    'sample': handlers['sampleHandler']
+}

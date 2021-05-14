@@ -4,7 +4,7 @@ Content-Type: application/json
 {This is payload from client}
 
 ###
-GET http://localhost:3000/api/item?id=99
+GET http://localhost:3000
 Accept: application/json
 
 ###
