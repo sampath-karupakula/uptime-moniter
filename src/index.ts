@@ -10,6 +10,33 @@ import {StringDecoder} from 'string_decoder';
 import {URL} from "url";
 
 
+
+
+const environment: any = {};
+
+environment.development = {
+    'port': 3000,
+    'envName': 'development'
+}
+
+
+
+environment.production = {
+    'port': 5000,
+    'envName': 'production'
+}
+
+
+const currentEnvironment = typeof process.env.NODE_ENV == 'string' ? process.env.NODE_ENV.toLowerCase() : '';
+
+const environmentToExport = typeof environment[currentEnvironment] == 'object' ? environment[currentEnvironment]
+    : environment.development;
+
+
+module.exports = environmentToExport;
+
+
+
 // create a server
 let server = createServer((req: IncomingMessage, res: ServerResponse) => {
 
@@ -66,8 +93,9 @@ let server = createServer((req: IncomingMessage, res: ServerResponse) => {
 );
 
 // listening to the port.
-server.listen(3000, () => {
-    console.log("Server is listening to the port " + 3000);
+server.listen(environmentToExport.port, () => {
+    console.log("Server is listening to the port "+ environmentToExport.port +" and enviorment is "
+                        + environmentToExport.envName);
 });
 
 
